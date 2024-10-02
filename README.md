@@ -5,7 +5,7 @@ IPA Signing API using zsign
 ## Natively
 1. Install zsign [zsign](https://github.com/zhlynn/zsign.git)
 ```
-sudo su -c "apt-get install git -y && git clone https://github.com/zhlynn/zsign.git && cd zsign && chmod +x INSTALL.sh && ./INSTALL.sh && cp build/zsign /usr/local/bin"
+sudo su -c "apt-get install git -y && git clone https://github.com/zhlynn/zsign.git && cd zsign && chmod +x INSTALL.sh && ./INSTALL.sh && cd zsign/build && cp build/zsign /usr/local/bin"
 ```
 
 2. Install NodeJS and NPM

@@ -32,10 +32,10 @@ app.set('view engine', 'ejs');
 app.disable('x-powered-by');
 app.use('/', router);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 const mongourl = process.env.MongoURL || "mongodb://localhost:27017";
 const jwttoken = process.env.JWTToken || "askuasign";
-const domain = process.env.Domain || "https://sign.askua.ovh";
+const domain = process.env.Domain || "https://exestore.site";
 
 const client = new MongoClient(mongourl);
 

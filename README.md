@@ -1,4 +1,4 @@
-# AskuaSign
+# Daisukes IPA Signer
 IPA Signing API using zsign
 
 # Setup

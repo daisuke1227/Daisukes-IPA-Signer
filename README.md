@@ -5,6 +5,7 @@ IPA Signing API using zsign
 ## Natively
 1. Install zsign [zsign](https://github.com/zhlynn/zsign.git)
 ```
+sudo su
 sudo apt-get install git
 git clone https://github.com/zhlynn/zsign.git
 cd zsign

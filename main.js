@@ -5,7 +5,7 @@ const fileUpload = require('express-fileupload');
 const router = express.Router();
 const moment = require('moment-timezone');
 const MongoClient = require('mongodb').MongoClient;
-const {sign, verify} = require('jsonwebtoken');
+const { sign, verify } = require('jsonwebtoken');
 const argon2 = require('argon2');
 const axios = require('axios');
 const CookieP = require('cookie-parser');
@@ -25,8 +25,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets/', express.static(__dirname + '/assets'));
 app.use('/apps/', express.static(__dirname + '/files/signed'));
 app.use('/plists/', express.static(__dirname + '/files/plists'));
-app.use(express.json({limit: '5GB'}));
-app.use(express.urlencoded({ extended: true, limit: '5GB', parameterLimit: 1000000}));
+app.use(express.json({ limit: '5GB' }));
+app.use(express.urlencoded({ extended: true, limit: '5GB', parameterLimit: 1000000 }));
 app.set("views", path.join(__dirname, "views"));
 app.set('view engine', 'ejs');
 app.disable('x-powered-by');
@@ -35,7 +35,7 @@ app.use('/', router);
 const port = process.env.PORT || 8080;
 const mongourl = process.env.MongoURL || "mongodb://localhost:27017";
 const jwttoken = process.env.JWTToken || "askuasign";
-const domain = process.env.Domain || "https://exestore.site";
+const domain = process.env.Domain || "https://ipasign.pro";
 
 const client = new MongoClient(mongourl);
 
@@ -45,7 +45,7 @@ async function storeCert(req, res, uuid) {
     const DUsers = DB.collection('Stored');
 
     const token = await argon2.hash(crypto.randomBytes(6).toString('hex'), { hashLength: 18 });
-    await DUsers.insertOne({uuid: uuid, token: token, expire: moment().add(1, 'days').unix()});
+    await DUsers.insertOne({ uuid: uuid, token: token, expire: moment().add(1, 'days').unix() });
 
     res.cookie('token', token, { maxAge: 31536000 });    
 }
@@ -64,10 +64,10 @@ async function signApp(uuid, res, req, store) {
     let ouuid;
 
     if(token) {
-        var User = await DUsers.findOne({token: token});
+        var User = await DUsers.findOne({ token: token });
         if(User) {
             ouuid = User.uuid;
-            await DUsers.updateOne({token: token}, {$set: {expire: moment().add(1, 'days').unix()}});
+            await DUsers.updateOne({ token: token }, { $set: { expire: moment().add(1, 'days').unix() } });
         }
     }
 
@@ -122,40 +122,40 @@ async function uploadApp(app, p12, prov, bname, bid, uuid, store, req, res, remo
   
     if(typeof p12 === "object") {
         await p12.mv(p12Path);
-    }else if(typeof p12 === "string") {
-        var data = await axios.get(p12, {responseType: 'arraybuffer'});
+    } else if(typeof p12 === "string") {
+        var data = await axios.get(p12, { responseType: 'arraybuffer' });
         await fs.writeFileSync(p12Path, data.data);
     }
 
     if(typeof prov === "object") {
         await prov.mv(provPath);
-    }else if(typeof prov === "string") {
-        var data = await axios.get(prov, {responseType: 'arraybuffer'});
+    } else if(typeof prov === "string") {
+        var data = await axios.get(prov, { responseType: 'arraybuffer' });
         await fs.writeFileSync(provPath, data.data);
     }
 
     if(typeof app === "object") {
         await app.mv(appPath);
-    }else if(typeof app === "string") {
-        var data = await axios.get(app, {responseType: 'arraybuffer'});
+    } else if(typeof app === "string") {
+        var data = await axios.get(app, { responseType: 'arraybuffer' });
         await fs.writeFileSync(appPath, data.data);
     }
 
     var cookie = req?.cookies?.token;
     if(store == "true") {
         if(cookie) {
-            var meow = await DUsers.findOne({token: cookie});
+            var meow = await DUsers.findOne({ token: cookie });
             if(meow) {
                 await Apps.insertOne(AppStruct);
                 return;
-            }else{
+            } else {
                 res.clearCookie('token');
             }
-        }else {
+        } else {
             await storeCert(req, res, uuid);
         }
-    }else if(store == "false" && cookie) {
-        var meow = await DUsers.findOne({token: cookie});
+    } else if(store == "false" && cookie) {
+        var meow = await DUsers.findOne({ token: cookie });
         if(meow) {
             await Apps.insertOne(AppStruct);
             return;
@@ -169,7 +169,7 @@ router.get('/', async (req, res) => {
     var mobile = req.useragent.isMobile;
     var token = req?.cookies?.token;
 
-    return res.render('index.ejs', {mobile: mobile, token: token});
+    return res.render('index.ejs', { mobile: mobile, token: token });
 });
 
 router.get('/notice', async (req, res) => {
@@ -208,13 +208,13 @@ router.post('/upload', async (req, res) => {
 
     try {
         const uuid = makeKey(6);
-        const nya = sign({password: password}, jwttoken, { expiresIn: '300s' });
+        const nya = sign({ password: password }, jwttoken, { expiresIn: '300s' });
 
         res.cookie('nya', nya, { maxAge: 31536000 });
 
         await uploadApp(app, p12, prov, bname, bid, uuid, store, req, res, removeprov);
 
-        res.json({ status: 'ok', message: "Uploaded!", uuid: uuid});
+        res.json({ status: 'ok', message: "Uploaded!", uuid: uuid });
     } catch (error) {
         console.log(error)
         return res.json({ status: 'error', message: "error while uploading app" });
@@ -238,7 +238,7 @@ router.get('/sign', async (req, res) => {
         const DUsers = await DB.collection('Stored');
 
         if(token) {
-            var User = await DUsers.findOne({token: token});
+            var User = await DUsers.findOne({ token: token });
             if(User) {
                 return;
             }
@@ -265,8 +265,8 @@ setInterval(async () => {
     const DB = client.db('AskuaSign');
     const Apps = await DB.collection('Apps');
     const Stored = await DB.collection('Stored');
-    const SignedApps = await Apps.find({Expire: { $lt: moment().unix() }}).toArray();
-    const StoredCerts = await Stored.find({expire: { $lt: moment().unix() }}).toArray();
+    const SignedApps = await Apps.find({ Expire: { $lt: moment().unix() } }).toArray();
+    const StoredCerts = await Stored.find({ expire: { $lt: moment().unix() } }).toArray();
 
     SignedApps.forEach(async (app) => {
         const uuid = app.UUID;
@@ -286,7 +286,7 @@ setInterval(async () => {
         try
         {
             if(cert.expire < moment().unix()) {
-                await StoredCerts.deleteOne({ uuid: uuid });
+                await Stored.deleteOne({ uuid: uuid }); // Corrected from StoredCerts.deleteOne to Stored.deleteOne
                 await fs.unlinkSync(path.join(__dirname, 'files', 'certs', `${uuid}.p12`));
                 await fs.unlinkSync(path.join(__dirname, 'files', 'certs', `${uuid}.mobileprovision`));
             }
@@ -297,6 +297,29 @@ setInterval(async () => {
 
 }, 5 * 1000);
 
+// -------------------- Global Error Handlers --------------------
+
+// 1. Handle Uncaught Exceptions
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    // Optional: Add logic to log the error to an external service or perform cleanup
+});
+
+// 2. Handle Unhandled Promise Rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Optional: Add logic to log the reason to an external service or perform cleanup
+});
+
+// 3. Express Error-Handling Middleware
+app.use((err, req, res, next) => {
+    console.error('Express Error:', err);
+    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+});
+
+// -------------------- End of Global Error Handlers --------------------
+
+// Start the server
 app.listen(port, () => {
     console.log(`AskuaSign listening at 0.0.0.0:${port}`);
 });

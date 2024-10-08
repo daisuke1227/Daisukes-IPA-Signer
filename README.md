@@ -36,7 +36,7 @@ sudo su -c "apt-get install git -y && git clone https://github.com/zhlynn/zsign.
     ```
 6. Modify .env
 
-7. modify main.js and replace ```const domain = process.env.Domain ||``` 
+7. modify main.js and replace ```const domain = process.env.Domain || "https://replacewebsite.com";``` 
 
 8. Run
     ```console

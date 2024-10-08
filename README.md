@@ -35,7 +35,10 @@ sudo su -c "apt-get install git -y && git clone https://github.com/zhlynn/zsign.
     npm install
     ```
 6. Modify .env
-7. Run
+
+7. modify main.js and replace ```const domain = process.env.Domain ||``` 
+
+8. Run
     ```console
     node .
     ```

@@ -1,58 +1,69 @@
-# azure-pipelines.yml
-trigger:
-  branches:
-    include:
-      - master  # Define the branch that will trigger the pipeline
+# .github/workflows/ci.yml
+name: CI Pipeline
 
-pool:
-  vmImage: 'ubuntu-latest' # Change this if you're using a different VM
+# Define the events that trigger the workflow
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
-steps:
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-# Step 1: Update apt and install dependencies like git, gnupg, and curl
-- script: |
-    sudo apt-get update
-    sudo apt-get install -y git gnupg curl
-  displayName: 'Install Git, GnuPG, and Curl'
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-# Step 2: Clone and install zsign
-- script: |
-    git clone https://github.com/zhlynn/zsign.git
-    cd zsign
-    chmod +x INSTALL.sh
-    ./INSTALL.sh
-    cd build
-    sudo cp zsign /usr/local/bin
-  displayName: 'Install zsign'
+      # Step 2: Install Git, GnuPG, and Curl
+      - name: Install Git, GnuPG, and Curl
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git gnupg curl
 
-# Step 3: Install MongoDB
-- script: |
-    # Import the public key
-    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+      # Step 3: Clone and install zsign
+      - name: Install zsign
+        run: |
+          git clone https://github.com/zhlynn/zsign.git
+          cd zsign
+          chmod +x INSTALL.sh
+          ./INSTALL.sh
+          cd build
+          sudo cp zsign /usr/local/bin
 
-    # Add the MongoDB repository
-    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+      # Step 4: Install MongoDB
+      - name: Install MongoDB
+        run: |
+          # Import the public key
+          curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
 
-    # Update packages and install MongoDB
-    sudo apt-get update
-    sudo apt-get install -y mongodb-org
+          # Add the MongoDB repository
+          echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 
-    # Start and enable MongoDB service
-    sudo systemctl start mongod
-    sudo systemctl enable mongod
-  displayName: 'Install and Start MongoDB'
+          # Update packages and install MongoDB
+          sudo apt-get update
+          sudo apt-get install -y mongodb-org
 
-# Step 4: Install Node.js using NodeTool task and then install npm dependencies
-- task: NodeTool@0
-  inputs:
-    versionSpec: '16.x' # Specify the desired Node.js version
-  displayName: 'Install Node.js'
+          # Start MongoDB service
+          sudo systemctl start mongod
+          sudo systemctl enable mongod
 
-- script: |
-    npm install
-  displayName: 'Install npm Packages'
+      # Step 5: Set up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x' # Specify the desired Node.js version
 
-# Step 5: Run the Node.js project
-- script: |
-    node .
-  displayName: 'Run Node.js Project'
+      # Step 6: Install npm dependencies
+      - name: Install npm Packages
+        run: |
+          npm install
+
+      # Step 7: Run the Node.js project
+      - name: Run Node.js Project
+        run: |
+          node .

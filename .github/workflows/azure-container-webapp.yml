@@ -1,0 +1,51 @@
+# azure-pipelines.yml
+trigger:
+  - master
+
+pool:
+  vmImage: 'ubuntu-latest' # Change this if you're using a different VM
+
+steps:
+
+# Step 1: Update apt and install dependencies like git and gnupg
+- script: |
+    sudo apt-get update
+    sudo apt-get install git gnupg curl -y
+  displayName: 'Install Git, gnupg, and curl'
+
+# Step 2: Clone and install zsign
+- script: |
+    sudo su -c "git clone https://github.com/zhlynn/zsign.git"
+    cd zsign
+    sudo su -c "chmod +x INSTALL.sh"
+    sudo su -c "./INSTALL.sh"
+    cd build
+    sudo su -c "cp zsign /usr/local/bin"
+  displayName: 'Install zsign'
+
+# Step 3: Install MongoDB
+- script: |
+    # Import the public key
+    curl -fsSL https://pgp.mongodb.com/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+
+    # Add the MongoDB repository
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+
+    # For Debian, swap the line above with:
+    # echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] http://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+
+    # Update packages and install MongoDB
+    sudo apt-get update
+    sudo apt-get install -y mongodb-org
+  displayName: 'Install MongoDB'
+
+# Step 4: Install Node.js and npm dependencies
+- script: |
+    sudo apt-get install nodejs npm -y
+    npm install
+  displayName: 'Install Node.js and npm packages'
+
+# Step 5: Run the Node.js project
+- script: |
+    node .
+  displayName: 'Run Node.js Project'

@@ -9,20 +9,20 @@ pool:
 
 steps:
 
-# Step 1: Update apt and install dependencies like git and gnupg
+# Step 1: Update apt and install dependencies like git, gnupg, and curl
 - script: |
     sudo apt-get update
-    sudo apt-get install git gnupg curl -y
-  displayName: 'Install Git, gnupg, and curl'
+    sudo apt-get install -y git gnupg curl
+  displayName: 'Install Git, GnuPG, and Curl'
 
 # Step 2: Clone and install zsign
 - script: |
-    sudo su -c "git clone https://github.com/zhlynn/zsign.git"
+    git clone https://github.com/zhlynn/zsign.git
     cd zsign
-    sudo su -c "chmod +x INSTALL.sh"
-    sudo su -c "./INSTALL.sh"
+    chmod +x INSTALL.sh
+    ./INSTALL.sh
     cd build
-    sudo su -c "cp zsign /usr/local/bin"
+    sudo cp zsign /usr/local/bin
   displayName: 'Install zsign'
 
 # Step 3: Install MongoDB
@@ -33,19 +33,24 @@ steps:
     # Add the MongoDB repository
     echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 
-    # For Debian, swap the line above with:
-    # echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] http://repo.mongodb.org/apt/debian bullseye/mongodb-org/7.0 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-
     # Update packages and install MongoDB
     sudo apt-get update
     sudo apt-get install -y mongodb-org
-  displayName: 'Install MongoDB'
 
-# Step 4: Install Node.js and npm dependencies
+    # Start and enable MongoDB service
+    sudo systemctl start mongod
+    sudo systemctl enable mongod
+  displayName: 'Install and Start MongoDB'
+
+# Step 4: Install Node.js using NodeTool task and then install npm dependencies
+- task: NodeTool@0
+  inputs:
+    versionSpec: '16.x' # Specify the desired Node.js version
+  displayName: 'Install Node.js'
+
 - script: |
-    sudo apt-get install nodejs npm -y
     npm install
-  displayName: 'Install Node.js and npm packages'
+  displayName: 'Install npm Packages'
 
 # Step 5: Run the Node.js project
 - script: |

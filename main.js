@@ -237,30 +237,31 @@ router.post('/upload', async (req, res) => {
 
 router.get('/sign', async (req, res) => {
     const { uuid, store } = req.query;
+    
+    // Check for the UUID parameter
     if (!uuid) {
         res.json({ status: 'error', message: "Missing parameters" });
         return;
     }
+
     try {
+        // Sign the app using the UUID
         await signApp(uuid, res, req, store);
 
-        res.json({ status: 'ok', message: "Signed!", url: `itms-services://?action=download-manifest&url=${domain}/plists/${uuid}.plist`, pcurl: `${domain}/install?uuid=${uuid}` });
+        // Respond with success and provide the URLs for downloading the signed IPA
+        res.json({
+            status: 'ok',
+            message: "Signed!",
+            url: `itms-services://?action=download-manifest&url=${domain}/plists/${uuid}.plist`,
+            pcurl: `${domain}/install?uuid=${uuid}`
+        });
 
-        let token = req?.cookies?.token;
-        await client.connect();
-        const DB = await client.db('AskuaSign');
-        const DUsers = await DB.collection('Stored');
-
-        if(token) {
-            var User = await DUsers.findOne({ token: token });
-            if(User) {
-                return;
-            }
-        }
+        // Optionally delete the files after signing
         return deleteFiles(uuid);
     } catch (error) {
-        console.log(error)
-        return res.json({ status: 'error', message: "error while signing app (unknown, report in discord)" });
+        // Handle any errors that occur during the signing process
+        console.log(error);
+        return res.json({ status: 'error', message: "Error while signing app (unknown, report in Discord)" });
     }
 });
 

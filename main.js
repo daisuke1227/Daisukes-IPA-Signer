@@ -264,6 +264,36 @@ router.get('/sign', async (req, res) => {
     }
 });
 
+router.get('/sign2', async (req, res) => {
+    const { uuid, store } = req.query;
+    
+    // Check for the UUID parameter
+    if (!uuid) {
+        res.json({ status: 'error', message: "Missing parameters" });
+        return;
+    }
+
+    try {
+        // Sign the app using the UUID
+        await signApp(uuid, res, req, store);
+
+        // Respond with success and provide the URLs for downloading the signed IPA
+        res.json({
+            status: 'ok',
+            message: "Signed!",
+            url: `itms-services://?action=download-manifest&url=${domain}/plists/${uuid}.plist`,
+            pcurl: `${domain}/install?uuid=${uuid}`
+        });
+
+        // Optionally delete the files after signing
+        return deleteFiles(uuid);
+    } catch (error) {
+        // Handle any errors that occur during the signing process
+        console.log(error);
+        return res.json({ status: 'error', message: "Error while signing app (unknown, report in Discord)" });
+    }
+});
+
 router.get('/install', async (req, res) => {
     var uuid = req?.query?.uuid;
     if (!uuid) {

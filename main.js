@@ -114,6 +114,46 @@ async function signApp(uuid, res, req, store) {
     await fs.writeFileSync(plistPath, plist);
 }
 
+async function signApp2(uuid, res, req, store) {
+    // Connect to the database
+    await client.connect();
+    const DB = client.db('AskuaSign');
+    const Apps = await DB.collection('Apps');
+
+    // Find the app based on the UUID
+    const app = await Apps.findOne({ UUID: uuid });
+    if (!app) {
+        return res.json({ status: 'error', message: "App not found" });
+    }
+
+    // Get necessary app details
+    const appname = app.CustomName;
+    const bid = app.BundleID;
+    const prov = app.DeleteProv;
+
+    // Define paths for signing
+    const appPath = path.join(__dirname, 'files', 'temp', `${uuid}.ipa`);
+    const p12Path = path.join(__dirname, 'files', 'certs', `${uuid}.p12`);
+    const provPath = path.join(__dirname, 'files', 'certs', `${uuid}.mobileprovision`);
+    const plistPath = path.join(__dirname, 'files', 'plists', `${uuid}.plist`);
+    const signAppPath = path.join(__dirname, 'files', 'signed', `${uuid}.ipa`);
+
+    // Execute the signing process using zsign
+    var nya = await execAwait(`zsign -k ${p12Path} -m ${provPath} -o ${signAppPath} ${bid ? `-b ${bid.replace(/\s+/g, ' ').trim()}` : ""} ${appname ? `-n '${appname}'` : ""} -f ${prov ? '-x' : ''}`);
+
+    // Check if the signing process failed
+    if(nya == true) {
+        return res.json({ status: 'error', message: "Error while signing app (signing failed)" });
+    }
+
+    // Create the plist file for installation
+    const plist = await makePlist(bid, uuid, nya, domain);
+    await fs.writeFileSync(plistPath, plist);
+
+    // Respond with success if everything worked
+    return res.json({ status: 'ok', message: "App signed successfully" });
+}
+
 async function uploadApp(app, p12, prov, bname, bid, uuid, store, req, res, removeprov)
 {
     const appPath = path.join(__dirname, 'files', 'temp', `${uuid}.ipa`);
@@ -275,7 +315,7 @@ router.get('/sign2', async (req, res) => {
 
     try {
         // Sign the app using the UUID
-        await signApp(uuid, res, req, store);
+        await signApp2(uuid, res, req, store);
 
         // Respond with success and provide the URLs for downloading the signed IPA
         res.json({

@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors'); // Add this line
 const path = require('path');
 const fs = require('fs');
 const fileUpload = require('express-fileupload');
@@ -15,6 +16,19 @@ const { makeKey, execAwait, makePlist, deleteFiles } = require('./utils');
 require('dotenv').config();
 
 const app = express();
+
+// Add this block to configure CORS
+const allowedOrigins = ['http://127.0.0.1:8081', 'https://ipasign.pro'];
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Allow cookies and authentication headers
+}));
 
 app.use(CookieP());
 app.use(fileUpload({

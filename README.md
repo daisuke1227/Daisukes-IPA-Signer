@@ -1,3 +1,5 @@
+# Im never gonna upate this ever again if you want my new project check this out https://github.com/daisuke1227/DaiSign-API/ (zsign api >~<)
+
 # Daisukes IPA Signer
 IPA Signing API using zsign
 
